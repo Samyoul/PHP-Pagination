@@ -19,11 +19,10 @@ the instance&#039;s *&lt;parse&gt; method.
 
     // determine page (based on <_GET>)
     $page = isset($_GET['page']) ? ((int) $_GET['page']) : 1;
+    $totalItems = 200;
 
     // instantiate; set current page; set number of records
-    $pagination = (new Pagination());
-    $pagination->setCurrent($page);
-    $pagination->setTotal(200);
+    $pagination = new Pagination($page, $totalItems);
 
     // grab rendered/parsed pagination markup
     $markup = $pagination->parse();

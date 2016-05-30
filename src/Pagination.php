@@ -54,8 +54,8 @@ namespace Samyoul\Pagination;
          * @var    array
          * @access protected
          */
-        protected $_variables = array(
-            'classes' => array('clearfix', 'pagination'),
+        /*protected $_variables = [
+            'classes' => ['clearfix', 'pagination'],
             'crumbs' => 5,
             'key' => 'page',
             'target' => '',
@@ -63,7 +63,20 @@ namespace Samyoul\Pagination;
             'previous' => '&laquo; Previous',
             'alwaysShowPagination' => false,
             'clean' => false
-        );
+        ];*/
+
+        protected $currentPage = 1;
+        protected $totalItems = null;
+        protected $rpp;
+        protected $itemsPerPage = 10;
+        protected $classes = ['clearfix', 'pagination'];
+        protected $crumbs = 5;
+        protected $key = 'page';
+        protected $target = '';
+        protected $next = 'Next &raquo;';
+        protected $previous = '&laquo; Previous';
+        protected $alwaysShowPagination = false;
+        protected $clean = false;
 
         /**
          * __construct
@@ -85,9 +98,6 @@ namespace Samyoul\Pagination;
 
             // total instantiation setting
             $this->setItemsPerPage($itemsPerPage);
-
-            // Pass along get (for link generation)
-            $this->_variables['get'] = $_GET;
         }
 
         /**
@@ -102,10 +112,10 @@ namespace Samyoul\Pagination;
          */
         protected function _check()
         {
-            if (!isset($this->_variables['current'])) {
-                throw new \Exception('Pagination::current must be set.');
-            } elseif (!isset($this->_variables['total'])) {
-                throw new \Exception('Pagination::total must be set.');
+            if (!isset($this->currentPage)) {
+                throw new \Exception('Pagination::currentPage must be set.');
+            } elseif (!isset($this->totalItems) OR $this->totalItems === null) {
+                throw new \Exception('Pagination::totalItems must be set.');
             }
         }
 
@@ -122,8 +132,8 @@ namespace Samyoul\Pagination;
          */
         public function addClasses($classes)
         {
-            $this->_variables['classes'] = array_merge(
-                $this->_variables['classes'],
+            $this->classes = array_merge(
+                $this->classes,
                 (array) $classes
             );
         }
@@ -139,7 +149,7 @@ namespace Samyoul\Pagination;
          */
         public function alwaysShowPagination()
         {
-            $this->_variables['alwaysShowPagination'] = true;
+            $this->alwaysShowPagination = true;
         }
 
         /**
@@ -150,11 +160,11 @@ namespace Samyoul\Pagination;
          */
         public function getCanonicalUrl()
         {
-            $target = $this->_variables['target'];
+            $target = $this->target;
             if (empty($target)) {
                 $target = $_SERVER['PHP_SELF'];
             }
-            $page = (int) $this->_variables['current'];
+            $page = (int) $this->currentPage;
             if ($page !== 1) {
                 return 'http://' . ($_SERVER['HTTP_HOST']) . ($target) . $this->getPageParam();
             }
@@ -171,9 +181,9 @@ namespace Samyoul\Pagination;
         public function getPageParam($page = false)
         {
             if ($page === false) {
-                $page = (int) $this->_variables['current'];
+                $page = (int) $this->currentPage;
             }
-            $key = $this->_variables['key'];
+            $key = $this->key;
             return '?' . ($key) . '=' . ((int) $page);
         }
 
@@ -186,7 +196,7 @@ namespace Samyoul\Pagination;
          */
         public function getPageUrl($page = false)
         {
-            $target = $this->_variables['target'];
+            $target = $this->target;
             if (empty($target)) {
                 $target = $_SERVER['PHP_SELF'];
             }
@@ -204,29 +214,10 @@ namespace Samyoul\Pagination;
          */
         public function getRelPrevNextLinkTags()
         {
-            // generate path
-            $target = $this->_variables['target'];
-            if (empty($target)) {
-                $target = $_SERVER['PHP_SELF'];
-            }
-            $key = $this->_variables['key'];
-            $params = $this->_variables['get'];
-            $params[$key] = 'pgnmbr';
-            $href = ($target) . '?' . http_build_query($params);
-            $href = preg_replace(
-                array('/=$/', '/=&/'),
-                array('', '&'),
-                $href
-            );
-            $href = 'http://' . ($_SERVER['HTTP_HOST']) . $href;
-
             // Pages
-            $currentPage = (int) $this->_variables['current'];
+            $currentPage = (int) $this->currentPage;
             $numberOfPages = (
-                (int) ceil(
-                    $this->_variables['total'] /
-                    $this->_variables['rpp']
-                )
+                (int) ceil( $this->totalItems / $this->rpp )
             );
 
             // On first page
@@ -234,24 +225,22 @@ namespace Samyoul\Pagination;
 
                 // There is a page after this one
                 if ($numberOfPages > 1) {
-                    $href = str_replace('pgnmbr', 2, $href);
-                    return array(
-                        '<link rel="next" href="' . ($href) . '" />'
-                    );
+                    $href = $this->renderURL(2);
+                    return ['<link rel="next" href="' . ($href) . '" />'];
                 }
-                return array();
+                return [];
             }
 
             // Store em
-            $prevNextTags = array(
-                '<link rel="prev" href="' . (str_replace('pgnmbr', $currentPage - 1, $href)) . '" />'
-            );
+            $prevNextTags = [
+                '<link rel="prev" href="' . ($this->renderURL($currentPage - 1)) . '" />'
+            ];
 
             // There is a page after this one
             if ($numberOfPages > $currentPage) {
                 array_push(
                     $prevNextTags,
-                    '<link rel="next" href="' . (str_replace('pgnmbr', $currentPage + 1, $href)) . '" />'
+                    '<link rel="next" href="' . ($this->renderURL($currentPage + 1)) . '" />'
                 );
             }
             return $prevNextTags;
@@ -264,24 +253,141 @@ namespace Samyoul\Pagination;
          * logic found in the render.inc.php file.
          * 
          * @access public
-         * @return void
+         * @return string
          */
         public function parse()
         {
             // ensure required parameters were set
             $this->_check();
 
-            // bring variables forward
-            foreach ($this->_variables as $_name => $_value) {
-                $$_name = $_value;
+            $_response = $this->render();
+            ob_end_clean();
+
+            return $_response;
+        }
+
+        protected function render(){
+            ob_start();
+            // total page count calculation
+            $pages = ((int) ceil($this->totalItems / $this->rpp));
+
+            // if it's an invalid page request
+            if ($this->currentPage < 1) {
+                throw new \Exception("Pagination::currentPage must can't be less than 1.");
+            } elseif ($this->currentPage > $pages) {
+                throw new \Exception("Pagination::currentPage must can't be more than the total number of pages.");
             }
 
-            // buffer handling
-            ob_start();
-            include 'render.inc.php';
-            $_response = ob_get_contents();
-            ob_end_clean();
-            return $_response;
+            // if there are pages to be shown
+            if ($pages > 1 || $this->alwaysShowPagination === true) {
+                ?>
+                <ul class="<?= implode(' ', $this->classes) ?>">
+                    <?php
+                    /**
+                     * Previous Link
+                     */
+
+                    // anchor classes and target
+                    $classes = ['copy', 'previous'];
+                    $href = $this->renderURL($this->currentPage - 1);
+                    if ($this->currentPage === 1) {
+                        $href = '#';
+                        array_push($classes, 'disabled');
+                    }
+                    ?>
+                    <li class="<?= implode(' ', $classes) ?>">
+                        <a href="<?= ($href) ?>"><?= ($this->previous) ?></a>
+                    </li>
+                    <?php
+                    /**
+                     * if this isn't a clean output for pagination (eg. show numerical
+                     * links)
+                     */
+                    if (!$this->clean) {
+
+                        /**
+                         * Calculates the number of leading page crumbs based on the minimum
+                         *     and maximum possible leading pages.
+                         */
+                        $max = min($pages, $this->crumbs);
+                        $limit = ((int) floor($max / 2));
+                        $leading = $limit;
+                        for ($x = 0; $x < $limit; ++$x) {
+                            if ($this->currentPage === ($x + 1)) {
+                                $leading = $x;
+                                break;
+                            }
+                        }
+                        for ($x = $pages - $limit; $x < $pages; ++$x) {
+                            if ($this->currentPage === ($x + 1)) {
+                                $leading = $max - ($pages - $x);
+                                break;
+                            }
+                        }
+
+                        // calculate trailing crumb count based on inverse of leading
+                        $trailing = $max - $leading - 1;
+
+                        // generate/render leading crumbs
+                        for ($x = 0; $x < $leading; ++$x) {
+                            // class/href setup
+                            $href = $this->renderURL($this->currentPage + $x - $leading);
+                            ?>
+                            <li class="number">
+                                <a data-pagenumber="<?= ($this->currentPage + $x - $leading) ?>" href="<?= ($href) ?>">
+                                    <?= ($this->currentPage + $x - $leading) ?>
+                                </a>
+                            </li>
+                            <?php
+                        }
+
+                        // print current page
+                        ?>
+                        <li class="number active">
+                            <a data-pagenumber="<?= ($this->currentPage) ?>
+                            " href="#"><?= ($this->currentPage) ?>
+                            </a>
+                        </li>
+                        <?php
+                        // generate/render trailing crumbs
+                        for ($x = 0; $x < $trailing; ++$x) {
+
+                            // class/href setup
+                            $href = $this->renderURL($this->currentPage + $x + 1);
+                            ?>
+                            <li class="number">
+                                <a data-pagenumber="<?= ($this->currentPage + $x + 1) ?>" href="<?= ($href) ?>">
+                                    <?= ($this->currentPage + $x + 1) ?>
+                                </a>
+                            </li>
+                            <?php
+                        }
+                    }
+
+                    /**
+                     * Next Link
+                     */
+
+                    // anchor classes and target
+                    $href = $this->renderURL($this->currentPage + 1);
+                    $classes = ['copy', 'next'];
+                    if ($this->currentPage === $pages) {
+                        $href = '#';
+                        array_push($classes, 'disabled');
+                    }
+                    ?>
+                    <li class="<?= implode(' ', $classes) ?>">
+                        <a href="<?= ($href) ?>"><?= ($this->next) ?></a>
+                    </li>
+                </ul>
+                <?php
+            }
+            return ob_get_contents();
+        }
+
+        protected function renderURL($pageNumber)
+        {
+            return sprintf($this->target, $pageNumber);
         }
 
         /**
@@ -294,7 +400,7 @@ namespace Samyoul\Pagination;
          */
         public function setClasses($classes)
         {
-            $this->_variables['classes'] = (array) $classes;
+            $this->classes = (array) $classes;
         }
 
         /**
@@ -308,7 +414,7 @@ namespace Samyoul\Pagination;
          */
         public function setClean()
         {
-            $this->_variables['clean'] = true;
+            $this->clean = true;
         }
 
         /**
@@ -323,7 +429,7 @@ namespace Samyoul\Pagination;
          */
         public function setCrumbs($crumbs)
         {
-            $this->_variables['crumbs'] = $crumbs;
+            $this->crumbs = $crumbs;
         }
 
         /**
@@ -337,7 +443,7 @@ namespace Samyoul\Pagination;
          */
         public function setCurrent($current)
         {
-            $this->_variables['current'] = $current;
+            $this->currentPage = $current;
         }
 
         /**
@@ -350,7 +456,7 @@ namespace Samyoul\Pagination;
          */
         public function setFull()
         {
-            $this->_variables['clean'] = false;
+            $this->clean = false;
         }
 
         /**
@@ -365,7 +471,7 @@ namespace Samyoul\Pagination;
          */
         public function setKey($key)
         {
-            $this->_variables['key'] = $key;
+            $this->key = $key;
         }
 
         /**
@@ -379,7 +485,7 @@ namespace Samyoul\Pagination;
          */
         public function setNext($str)
         {
-            $this->_variables['next'] = $str;
+            $this->next = $str;
         }
 
         /**
@@ -393,7 +499,7 @@ namespace Samyoul\Pagination;
          */
         public function setPrevious($str)
         {
-            $this->_variables['previous'] = $str;
+            $this->previous = $str;
         }
 
         /**
@@ -408,7 +514,7 @@ namespace Samyoul\Pagination;
          */
         public function setItemsPerPage($rpp)
         {
-            $this->_variables['rpp'] = $rpp;
+            $this->rpp = $rpp;
         }
 
         /**
@@ -422,7 +528,7 @@ namespace Samyoul\Pagination;
          */
         public function setTarget($target)
         {
-            $this->_variables['target'] = $target;
+            $this->target = $target;
         }
 
         /**
@@ -436,6 +542,6 @@ namespace Samyoul\Pagination;
          */
         public function setTotal($total)
         {
-            $this->_variables['total'] = $total;
+            $this->total = $total;
         }
     }
