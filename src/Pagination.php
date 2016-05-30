@@ -523,7 +523,7 @@ namespace Samyoul\Pagination;
          * Sets the leading path for anchors.
          * 
          * @access public
-         * @param  string $target
+         * @param  string $target eg "protocol://sub-domain.domain.tld/resource/page/%d/category/5"
          * @return void
          */
         public function setTarget($target)
@@ -542,6 +542,6 @@ namespace Samyoul\Pagination;
          */
         public function setTotal($total)
         {
-            $this->total = $total;
+            $this->totalItems = $total;
         }
     }
