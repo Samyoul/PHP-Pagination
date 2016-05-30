@@ -57,7 +57,6 @@ namespace Samyoul\Pagination;
         protected $_variables = array(
             'classes' => array('clearfix', 'pagination'),
             'crumbs' => 5,
-            'rpp' => 10,
             'key' => 'page',
             'target' => '',
             'next' => 'Next &raquo;',
@@ -70,21 +69,22 @@ namespace Samyoul\Pagination;
          * __construct
          * 
          * @access public
-         * @param  integer $current (default: null)
-         * @param  integer $total (default: null)
-         * @return void
+         * @param  integer $currentPage (default: 1)
+         * @param  integer $totalItems (default: null)
+         * @param  integer $itemsPerPage (default: 10)
          */
-        public function __construct($current = null, $total = null)
+        public function __construct($currentPage = 1, $totalItems = null, $itemsPerPage = 10)
         {
             // current instantiation setting
-            if (!is_null($current)) {
-                $this->setCurrent($current);
+            $this->setCurrent($currentPage);
+
+            // total instantiation setting
+            if (!is_null($totalItems)) {
+                $this->setTotal($totalItems);
             }
 
             // total instantiation setting
-            if (!is_null($total)) {
-                $this->setTotal($total);
-            }
+            $this->setItemsPerPage($itemsPerPage);
 
             // Pass along get (for link generation)
             $this->_variables['get'] = $_GET;
@@ -98,13 +98,14 @@ namespace Samyoul\Pagination;
          * 
          * @access protected
          * @return void
+         * @throws \Exception
          */
         protected function _check()
         {
             if (!isset($this->_variables['current'])) {
-                throw new Exception('Pagination::current must be set.');
+                throw new \Exception('Pagination::current must be set.');
             } elseif (!isset($this->_variables['total'])) {
-                throw new Exception('Pagination::total must be set.');
+                throw new \Exception('Pagination::total must be set.');
             }
         }
 
@@ -396,7 +397,7 @@ namespace Samyoul\Pagination;
         }
 
         /**
-         * setRPP
+         * setItemsPerPage
          * 
          * Sets the number of records per page (used for determining total
          * number of pages).
@@ -405,7 +406,7 @@ namespace Samyoul\Pagination;
          * @param  integer $rpp
          * @return void
          */
-        public function setRPP($rpp)
+        public function setItemsPerPage($rpp)
         {
             $this->_variables['rpp'] = $rpp;
         }
