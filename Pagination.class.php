@@ -1,5 +1,7 @@
 <?php
 
+namespace Samyoul\Pagination;
+
     /**
      * Pagination
      * 
