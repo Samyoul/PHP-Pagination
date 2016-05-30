@@ -54,17 +54,6 @@ namespace Samyoul\Pagination;
          * @var    array
          * @access protected
          */
-        /*protected $_variables = [
-            'classes' => ['clearfix', 'pagination'],
-            'crumbs' => 5,
-            'key' => 'page',
-            'target' => '',
-            'next' => 'Next &raquo;',
-            'previous' => '&laquo; Previous',
-            'alwaysShowPagination' => false,
-            'clean' => false
-        ];*/
-
         protected $currentPage = 1;
         protected $totalItems = null;
         protected $rpp;
@@ -127,15 +116,13 @@ namespace Samyoul\Pagination;
          * 
          * @see    <http://twitter.github.com/bootstrap/components.html#pagination>
          * @access public
-         * @param  mixed $classes
-         * @return void
+         * @param  array $classes
+         * @return self
          */
-        public function addClasses($classes)
+        public function addClasses(array $classes)
         {
-            $this->classes = array_merge(
-                $this->classes,
-                (array) $classes
-            );
+            $this->classes = array_merge($this->classes, $classes);
+            return $this;
         }
 
         /**
@@ -145,11 +132,12 @@ namespace Samyoul\Pagination;
          * aren't any pages to paginate through.
          * 
          * @access public
-         * @return void
+         * @return self
          */
         public function alwaysShowPagination()
         {
             $this->alwaysShowPagination = true;
+            return $this;
         }
 
         /**
@@ -396,11 +384,12 @@ namespace Samyoul\Pagination;
          * @see    <http://twitter.github.com/bootstrap/components.html#pagination>
          * @access public
          * @param  mixed $classes
-         * @return void
+         * @return self
          */
         public function setClasses($classes)
         {
             $this->classes = (array) $classes;
+            return $this;
         }
 
         /**
@@ -410,11 +399,12 @@ namespace Samyoul\Pagination;
          * previous/next markup. The counter-method of this is self::setFull.
          * 
          * @access public
-         * @return void
+         * @return self
          */
         public function setClean()
         {
             $this->clean = true;
+            return $this;
         }
 
         /**
@@ -425,11 +415,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  integer $crumbs
-         * @return void
+         * @return self
          */
         public function setCrumbs($crumbs)
         {
             $this->crumbs = $crumbs;
+            return $this;
         }
 
         /**
@@ -439,11 +430,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  integer $current
-         * @return void
+         * @return self
          */
         public function setCurrent($current)
         {
             $this->currentPage = $current;
+            return $this;
         }
 
         /**
@@ -452,11 +444,12 @@ namespace Samyoul\Pagination;
          * See self::setClean for documentation.
          * 
          * @access public
-         * @return void
+         * @return self
          */
         public function setFull()
         {
             $this->clean = false;
+            return $this;
         }
 
         /**
@@ -467,11 +460,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  string $key
-         * @return void
+         * @return self
          */
         public function setKey($key)
         {
             $this->key = $key;
+            return $this;
         }
 
         /**
@@ -481,11 +475,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  string $str
-         * @return void
+         * @return self
          */
         public function setNext($str)
         {
             $this->next = $str;
+            return $this;
         }
 
         /**
@@ -495,11 +490,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  string $str
-         * @return void
+         * @return self
          */
         public function setPrevious($str)
         {
             $this->previous = $str;
+            return $this;
         }
 
         /**
@@ -510,11 +506,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  integer $rpp
-         * @return void
+         * @return self
          */
         public function setItemsPerPage($rpp)
         {
             $this->rpp = $rpp;
+            return $this;
         }
 
         /**
@@ -524,11 +521,12 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  string $target eg "protocol://sub-domain.domain.tld/resource/page/%d/category/5"
-         * @return void
+         * @return self
          */
         public function setTarget($target)
         {
             $this->target = $target;
+            return $this;
         }
 
         /**
@@ -538,10 +536,11 @@ namespace Samyoul\Pagination;
          * 
          * @access public
          * @param  integer $total
-         * @return void
+         * @return self
          */
         public function setTotal($total)
         {
             $this->totalItems = $total;
+            return $this;
         }
     }
