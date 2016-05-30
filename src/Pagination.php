@@ -64,6 +64,8 @@ namespace Samyoul\Pagination;
         protected $target = '';
         protected $next = 'Next &raquo;';
         protected $previous = '&laquo; Previous';
+        protected $last = 'Last &raquo;&raquo;';
+        protected $first = '&laquo;&laquo; First';
         protected $alwaysShowPagination = false;
         protected $clean = false;
 
@@ -272,6 +274,21 @@ namespace Samyoul\Pagination;
                 <ul class="<?= implode(' ', $this->classes) ?>">
                     <?php
                     /**
+                     * First Link
+                     */
+                    // anchor classes and target
+                    $classes = ['copy', 'previous'];
+                    $href = $this->renderURL(1);
+                    if ($this->currentPage === 1) {
+                        $href = '#';
+                        array_push($classes, 'disabled');
+                    }
+                    ?>
+                    <li class="<?= implode(' ', $classes) ?>">
+                        <a href="<?= ($href) ?>"><?= ($this->first) ?></a>
+                    </li>
+                    <?php
+                    /**
                      * Previous Link
                      */
 
@@ -366,6 +383,23 @@ namespace Samyoul\Pagination;
                     ?>
                     <li class="<?= implode(' ', $classes) ?>">
                         <a href="<?= ($href) ?>"><?= ($this->next) ?></a>
+                    </li>
+                    <?php
+
+                    /**
+                     * Last Link
+                     */
+
+                    // anchor classes and target
+                    $href = $this->renderURL($pages);
+                    $classes = ['copy', 'next'];
+                    if ($this->currentPage === $pages) {
+                        $href = '#';
+                        array_push($classes, 'disabled');
+                    }
+                    ?>
+                    <li class="<?= implode(' ', $classes) ?>">
+                        <a href="<?= ($href) ?>"><?= ($this->last) ?></a>
                     </li>
                 </ul>
                 <?php
