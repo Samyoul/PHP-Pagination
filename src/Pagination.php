@@ -58,14 +58,20 @@ namespace Samyoul\Pagination;
         protected $totalItems = null;
         protected $rpp;
         protected $itemsPerPage = 10;
-        protected $classes = ['clearfix', 'pagination'];
+        protected $pageCount=null;
         protected $crumbs = 5;
+        protected $leadingCount;
+        protected $trailingCount;
+        protected $maxCrumbs;
+
+        protected $classes = ['clearfix', 'pagination'];
         protected $key = 'page';
         protected $target = '';
         protected $next = 'Next &raquo;';
         protected $previous = '&laquo; Previous';
         protected $last = 'Last &raquo;&raquo;';
         protected $first = '&laquo;&laquo; First';
+
         protected $alwaysShowPagination = false;
         protected $clean = false;
 
@@ -259,7 +265,7 @@ namespace Samyoul\Pagination;
         protected function render(){
             ob_start();
             // total page count calculation
-            $pages = ((int) ceil($this->totalItems / $this->rpp));
+            $pages = $this->getPageCount();
 
             // if it's an invalid page request
             if ($this->currentPage < 1) {
@@ -270,146 +276,183 @@ namespace Samyoul\Pagination;
 
             // if there are pages to be shown
             if ($pages > 1 || $this->alwaysShowPagination === true) {
+                //TODO Remove the last vestiges of HTML in this class
                 ?>
                 <ul class="<?= implode(' ', $this->classes) ?>">
-                    <?php
-                    /**
-                     * First Link
-                     */
-                    // anchor classes and target
-                    $classes = ['copy', 'previous'];
-                    $href = $this->renderURL(1);
-                    if ($this->currentPage === 1) {
-                        $href = '#';
-                        array_push($classes, 'disabled');
-                    }
-                    ?>
-                    <li class="<?= implode(' ', $classes) ?>">
-                        <a href="<?= ($href) ?>"><?= ($this->first) ?></a>
-                    </li>
-                    <?php
-                    /**
-                     * Previous Link
-                     */
 
-                    // anchor classes and target
-                    $classes = ['copy', 'previous'];
-                    $href = $this->renderURL($this->currentPage - 1);
-                    if ($this->currentPage === 1) {
-                        $href = '#';
-                        array_push($classes, 'disabled');
-                    }
-                    ?>
-                    <li class="<?= implode(' ', $classes) ?>">
-                        <a href="<?= ($href) ?>"><?= ($this->previous) ?></a>
-                    </li>
                     <?php
+                    $this->renderFirstLink();
+                    $this->renderPreviousLink();
+
                     /**
                      * if this isn't a clean output for pagination (eg. show numerical
                      * links)
                      */
                     if (!$this->clean) {
 
-                        /**
-                         * Calculates the number of leading page crumbs based on the minimum
-                         *     and maximum possible leading pages.
-                         */
-                        $max = min($pages, $this->crumbs);
-                        $limit = ((int) floor($max / 2));
-                        $leading = $limit;
-                        for ($x = 0; $x < $limit; ++$x) {
-                            if ($this->currentPage === ($x + 1)) {
-                                $leading = $x;
-                                break;
-                            }
-                        }
-                        for ($x = $pages - $limit; $x < $pages; ++$x) {
-                            if ($this->currentPage === ($x + 1)) {
-                                $leading = $max - ($pages - $x);
-                                break;
-                            }
-                        }
+                        $this->renderLeadingCrumbLinks();
+                        $this->renderCurrentLink();
+                        $this->renderTrailingCrumbLinks();
 
-                        // calculate trailing crumb count based on inverse of leading
-                        $trailing = $max - $leading - 1;
-
-                        // generate/render leading crumbs
-                        for ($x = 0; $x < $leading; ++$x) {
-                            // class/href setup
-                            $href = $this->renderURL($this->currentPage + $x - $leading);
-                            ?>
-                            <li class="number">
-                                <a data-pagenumber="<?= ($this->currentPage + $x - $leading) ?>" href="<?= ($href) ?>">
-                                    <?= ($this->currentPage + $x - $leading) ?>
-                                </a>
-                            </li>
-                            <?php
-                        }
-
-                        // print current page
-                        ?>
-                        <li class="number active">
-                            <a data-pagenumber="<?= ($this->currentPage) ?>
-                            " href="#"><?= ($this->currentPage) ?>
-                            </a>
-                        </li>
-                        <?php
-                        // generate/render trailing crumbs
-                        for ($x = 0; $x < $trailing; ++$x) {
-
-                            // class/href setup
-                            $href = $this->renderURL($this->currentPage + $x + 1);
-                            ?>
-                            <li class="number">
-                                <a data-pagenumber="<?= ($this->currentPage + $x + 1) ?>" href="<?= ($href) ?>">
-                                    <?= ($this->currentPage + $x + 1) ?>
-                                </a>
-                            </li>
-                            <?php
-                        }
                     }
 
-                    /**
-                     * Next Link
-                     */
-
-                    // anchor classes and target
-                    $href = $this->renderURL($this->currentPage + 1);
-                    $classes = ['copy', 'next'];
-                    if ($this->currentPage === $pages) {
-                        $href = '#';
-                        array_push($classes, 'disabled');
-                    }
+                    $this->renderNextLink();
+                    $this->renderLastLink();
                     ?>
-                    <li class="<?= implode(' ', $classes) ?>">
-                        <a href="<?= ($href) ?>"><?= ($this->next) ?></a>
-                    </li>
-                    <?php
 
-                    /**
-                     * Last Link
-                     */
-
-                    // anchor classes and target
-                    $href = $this->renderURL($pages);
-                    $classes = ['copy', 'next'];
-                    if ($this->currentPage === $pages) {
-                        $href = '#';
-                        array_push($classes, 'disabled');
-                    }
-                    ?>
-                    <li class="<?= implode(' ', $classes) ?>">
-                        <a href="<?= ($href) ?>"><?= ($this->last) ?></a>
-                    </li>
                 </ul>
                 <?php
             }
             return ob_get_contents();
         }
 
+        protected function renderLink($classes, $href, $text, $pageNumber="")
+        {
+            $classes = implode(' ', $classes);
+            $link = new Link($classes, $href, $text, $pageNumber);
+
+            return $link->getHTML();
+        }
+
+        protected function renderFirstLink()
+        {
+            $classes = ['copy', 'previous'];
+            $href = $this->renderURL(1);
+            if ($this->currentPage === 1) {
+                $href = '#';
+                array_push($classes, 'disabled');
+            }
+
+            echo $this->renderLink($classes, $href, $this->first);
+        }
+
+        protected function renderPreviousLink()
+        {
+            $classes = ['copy', 'previous'];
+            $href = $this->renderURL($this->currentPage - 1);
+            if ($this->currentPage === 1) {
+                $href = '#';
+                array_push($classes, 'disabled');
+            }
+
+            echo $this->renderLink($classes, $href, $this->previous);
+        }
+
+        protected function renderLeadingCrumbLinks()
+        {
+            for ($x = 0; $x < $this->getLeadingCount(); ++$x) {
+                $pageNumber = $this->currentPage + $x - $this->getLeadingCount();
+                $href = $this->renderURL($pageNumber);
+
+                echo $this->renderLink(['number'], $href, $pageNumber, $pageNumber);
+            }
+        }
+
+        protected function renderCurrentLink()
+        {
+            echo $this->renderLink(["number", "active"], "#", $this->currentPage, $this->currentPage);
+        }
+
+        protected function renderTrailingCrumbLinks()
+        {
+            for ($x = 0; $x < $this->getTrailingCount(); ++$x) {
+                $pageNumber = $this->currentPage + $x + 1;
+                $href = $this->renderURL($pageNumber);
+
+                echo $this->renderLink(['number'], $href, $pageNumber, $pageNumber);
+            }
+        }
+
+        protected function renderNextLink()
+        {
+            $href = $this->renderURL($this->currentPage + 1);
+            $classes = ['copy', 'next'];
+            if ($this->currentPage === $this->getPageCount()) {
+                $href = '#';
+                array_push($classes, 'disabled');
+            }
+
+            echo $this->renderLink($classes, $href, $this->next);
+        }
+
+        protected function renderLastLink()
+        {
+            $pages = $this->getPageCount();
+
+            $href = $this->renderURL($pages);
+            $classes = ['copy', 'next'];
+            if ($this->currentPage === $pages) {
+                $href = '#';
+                array_push($classes, 'disabled');
+            }
+
+            echo $this->renderLink($classes, $href, $this->last);
+        }
+
         protected function renderURL($pageNumber)
         {
             return sprintf($this->target, $pageNumber);
+        }
+
+        protected function getLeadingCount()
+        {
+            /**
+             * Calculates the number of leading page crumbs based on the minimum
+             * and maximum possible leading pages.
+             */
+            if(isset($this->leadingCount)){
+                return $this->leadingCount;
+            }
+
+            $pages = $this->getPageCount();
+
+            $max = $this->getMaxCrumbs();
+            $limit = ((int) floor($max / 2));
+            $leading = $limit;
+            for ($x = 0; $x < $limit; ++$x) {
+                if ($this->currentPage === ($x + 1)) {
+                    $leading = $x;
+                    break;
+                }
+            }
+            for ($x = $pages - $limit; $x < $pages; ++$x) {
+                if ($this->currentPage === ($x + 1)) {
+                    $leading = $max - ($pages - $x);
+                    break;
+                }
+            }
+
+            $this->leadingCount = $leading;
+            return $leading;
+        }
+
+        protected function getTrailingCount()
+        {
+            if(isset($this->trailingCount)){
+                return $this->trailingCount;
+            }
+
+            $this->trailingCount = $this->getMaxCrumbs() - $this->getLeadingCount() - 1;
+            return $this->trailingCount;
+        }
+
+        protected function getMaxCrumbs()
+        {
+            if(isset($this->maxCrumbs)){
+                return $this->maxCrumbs;
+            }
+
+            $this->maxCrumbs = min($this->getPageCount(), $this->crumbs);
+            return $this->maxCrumbs;
+        }
+
+        protected function getPageCount()
+        {
+            if(is_null($this->pageCount)){
+                $this->pageCount = ((int) ceil($this->totalItems / $this->rpp));
+                return $this->pageCount;
+            }
+            return $this->pageCount;
         }
 
         /**
@@ -468,7 +511,7 @@ namespace Samyoul\Pagination;
          */
         public function setCurrent($current)
         {
-            $this->currentPage = $current;
+            $this->currentPage = (int) $current;
             return $this;
         }
 
