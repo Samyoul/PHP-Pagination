@@ -17,7 +17,7 @@ class Link
     {
         $this->html = <<<HTML
 <li data-pagenumber="{$pageNumber}" class="{$classes}">
-    <a href="{$href}">"{$text}"</a>
+    <a href="{$href}">{$text}</a>
 </li>
 HTML;
     }
