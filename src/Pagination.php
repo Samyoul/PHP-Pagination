@@ -99,14 +99,14 @@ namespace Samyoul\Pagination;
          * 
          * @access protected
          * @return void
-         * @throws \Exception
+         * @throws PaginationException
          */
         protected function _check()
         {
             if (!isset($this->currentPage)) {
-                throw new \Exception('Pagination::currentPage must be set.');
+                throw new PaginationException('Pagination::currentPage must be set.');
             } elseif (!isset($this->totalItems) OR $this->totalItems === null) {
-                throw new \Exception('Pagination::totalItems must be set.');
+                throw new PaginationException('Pagination::totalItems must be set.');
             }
         }
 
@@ -263,9 +263,9 @@ namespace Samyoul\Pagination;
 
             // if it's an invalid page request
             if ($this->currentPage < 1) {
-                throw new \Exception("Pagination::currentPage must can't be less than 1.");
+                throw new PaginationException("Pagination::currentPage must can't be less than 1.");
             } elseif ($this->currentPage > $pages) {
-                throw new \Exception("Pagination::currentPage must can't be more than the total number of pages.");
+                throw new PaginationException("Pagination::currentPage must can't be more than the total number of pages.");
             }
 
             // if there are pages to be shown
