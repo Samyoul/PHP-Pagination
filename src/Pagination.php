@@ -130,9 +130,9 @@ namespace Samyoul\Pagination;
         {
             // if it's an invalid page request
             if ($this->currentPage < 1) {
-                throw new PaginationException("Pagination::currentPage must can't be less than 1.");
+                throw new PaginationException("Pagination::currentPage can not be less than 1.");
             } elseif ($this->currentPage > $this->getPageCount()) {
-                throw new PaginationException("Pagination::currentPage must can't be more than the total number of pages.");
+                throw new PaginationException("Pagination::currentPage can not be more than the total number of pages.");
             }
         }
 
