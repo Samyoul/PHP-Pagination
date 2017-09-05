@@ -1,5 +1,5 @@
 {
-    "name": "Samyoul/PHP-Pagination",
+    "name": "samyoul/php-pagination",
     "description": "Simple and lightweight PHP pagination class that works with Twitter Bootstrap perfectly. Manages pagination variables through instantiable class, and markup rendering through view-like include file. http://web.onassar.com/blog/2012/06/09/github-project-php-pagination",
     "require": {
         "php": "^5.3.3 || ^7.0"
