@@ -26,4 +26,15 @@ HTML;
     {
         return $this->html;
     }
+
+    public static function openLinks(array $classes=[])
+    {
+        echo "<ul class=\"". implode(' ', $classes) ."\">";
+    }
+
+    public static function closeLinks()
+    {
+        echo "</ul>";
+    }
+
 }

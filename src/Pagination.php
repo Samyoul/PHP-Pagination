@@ -289,32 +289,23 @@ namespace Samyoul\Pagination;
 
             // if there are pages to be shown
             if ($this->getPageCount() > 1 || $this->alwaysShowPagination === true) {
-                //TODO Remove the last vestiges of HTML in this class
-                ?>
-                <ul class="<?= implode(' ', $this->classes) ?>">
+                Link::openLinks($this->classes);
 
-                    <?php
-                    $this->renderFirstLink();
-                    $this->renderPreviousLink();
+                $this->renderFirstLink();
+                $this->renderPreviousLink();
 
-                    /**
-                     * if this isn't a clean output for pagination (eg. show numerical
-                     * links)
-                     */
-                    if (!$this->clean) {
+                //if this isn't a clean output for pagination (eg. show numerical links)
+                if (!$this->clean)
+                {
+                    $this->renderLeadingCrumbLinks();
+                    $this->renderCurrentLink();
+                    $this->renderTrailingCrumbLinks();
+                }
 
-                        $this->renderLeadingCrumbLinks();
-                        $this->renderCurrentLink();
-                        $this->renderTrailingCrumbLinks();
+                $this->renderNextLink();
+                $this->renderLastLink();
 
-                    }
-
-                    $this->renderNextLink();
-                    $this->renderLastLink();
-                    ?>
-
-                </ul>
-                <?php
+                Link::closeLinks();
             }
             return ob_get_contents();
         }
