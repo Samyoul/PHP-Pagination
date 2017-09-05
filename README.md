@@ -9,6 +9,10 @@ markup, without having to worry about including common files and set too many
 settings. With this class, you simply pass in your parameters and make a call to
 the instance&#039;s *&lt;parse&gt; method.
 
+### Installation
+
+`composer require samyoul/php-pagination`
+
 ### Pagination Instantiation and Rendering
 
 ``` php
