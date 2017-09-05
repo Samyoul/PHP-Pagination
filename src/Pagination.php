@@ -95,6 +95,9 @@ namespace Samyoul\Pagination;
 
             // total instantiation setting
             $this->setItemsPerPage($itemsPerPage);
+
+            //Check page number is valid
+            $this->validPageNumber();
         }
 
         /**
@@ -113,6 +116,23 @@ namespace Samyoul\Pagination;
                 throw new PaginationException('Pagination::currentPage must be set.');
             } elseif (!isset($this->totalItems) OR $this->totalItems === null) {
                 throw new PaginationException('Pagination::totalItems must be set.');
+            }
+        }
+
+        /**
+         * validPageNumber
+         *
+         * Checks current page number is within the range of pages.
+         *
+         * @throws PaginationException
+         */
+        protected function validPageNumber()
+        {
+            // if it's an invalid page request
+            if ($this->currentPage < 1) {
+                throw new PaginationException("Pagination::currentPage must can't be less than 1.");
+            } elseif ($this->currentPage > $this->getPageCount()) {
+                throw new PaginationException("Pagination::currentPage must can't be more than the total number of pages.");
             }
         }
 
@@ -262,20 +282,13 @@ namespace Samyoul\Pagination;
             return $_response;
         }
 
-        protected function render(){
+        protected function render()
+        {
+            $this->validPageNumber();
             ob_start();
-            // total page count calculation
-            $pages = $this->getPageCount();
-
-            // if it's an invalid page request
-            if ($this->currentPage < 1) {
-                throw new PaginationException("Pagination::currentPage must can't be less than 1.");
-            } elseif ($this->currentPage > $pages) {
-                throw new PaginationException("Pagination::currentPage must can't be more than the total number of pages.");
-            }
 
             // if there are pages to be shown
-            if ($pages > 1 || $this->alwaysShowPagination === true) {
+            if ($this->getPageCount() > 1 || $this->alwaysShowPagination === true) {
                 //TODO Remove the last vestiges of HTML in this class
                 ?>
                 <ul class="<?= implode(' ', $this->classes) ?>">
